@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeVision — Industrial Safety Command Center</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=JetBrains+Mono:wght@300;400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 3L32 10V20C32 27 26 33 18 35C10 33 4 27 4 20V10L18 3Z" fill="rgba(0,229,255,0.1)" stroke="#00e5ff" stroke-width="1.5"/>
+        <path d="M14 18L17 21L23 15" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="18" cy="13" r="2" fill="#00e5ff" opacity="0.6"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">SAFEVISION</div>
+      <div class="logo-sub">Industrial Safety System v1.0</div>
+    </div>
+  </div>
+
+  <div class="topbar-divider"></div>
+
+  <div class="status-pill online">
+    <div class="status-dot"></div>
+    SYSTEM ONLINE
+  </div>
+
+  <div class="topbar-divider"></div>
+
+  <div class="edge-badge">
+    ⚡ EDGE AI MODE — No Internet Required
+  </div>
+
+  <div class="topbar-divider"></div>
+
+  <div class="privacy-badge">
+    🛡 Privacy Safe: No Face Recognition
+  </div>
+
+  <div class="topbar-right">
+    <div class="cam-count">CAMERAS: <span id="camCount">6</span> ACTIVE</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <button class="demo-btn" onclick="simulateViolation()">⚡ SIMULATE VIOLATION</button>
+  </div>
+</header>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="nav-item active" onclick="showTab('live')">
+      <div class="nav-icon">🖥</div>
+      <div class="nav-label">Live Monitor</div>
+    </div>
+    <div class="nav-item" onclick="showTab('incidents')">
+      <div class="nav-icon">📜</div>
+      <div class="nav-label">Incidents</div>
+      <div class="nav-badge">7</div>
+    </div>
+    <div class="nav-item" onclick="showTab('heatmap')">
+      <div class="nav-icon">🔥</div>
+      <div class="nav-label">Heatmap</div>
+    </div>
+    <div class="nav-item" onclick="showTab('analytics')">
+      <div class="nav-icon">📊</div>
+      <div class="nav-label">Analytics</div>
+    </div>
+    <div class="nav-item" onclick="showTab('rules')">
+      <div class="nav-icon">⚙</div>
+      <div class="nav-label">Rules Engine</div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- LIVE MONITORING TAB -->
+    <div class="tab-content active" id="tab-live">
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-cell">
+          <div class="stat-label">Compliance Rate</div>
+          <div class="stat-value safe" id="compRate">87%</div>
+          <div class="stat-delta">↑ +3.2% vs yesterday</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-label">Active Violations</div>
+          <div class="stat-value critical" id="activeViol">3</div>
+          <div class="stat-delta">↑ 1 new in last 5m</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-label">Avg Response Time</div>
+          <div class="stat-value neon">4.2s</div>
+          <div class="stat-delta">↓ -0.8s improved</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-label">Workers Monitored</div>
+          <div class="stat-value neon">12</div>
+          <div class="stat-delta">All zones covered</div>
+        </div>
+      </div>
+
+      <!-- Live Layout -->
+      <div class="live-layout" style="flex:1; overflow:hidden;">
+        <!-- Video Feed -->
+        <div class="video-section">
+          <div class="video-header">
+            <div class="cam-selector">
+              <button class="cam-btn active">CAM 01</button>
+              <button class="cam-btn">CAM 02</button>
+              <button class="cam-btn">CAM 03</button>
+              <button class="cam-btn">ALL</button>
+            </div>
+            <div class="rec-indicator">
+              <div class="rec-dot"></div>
+              LIVE REC
+            </div>
+            <div style="margin-left:16px; display:flex; align-items:center; gap:8px;">
+              <div class="fps-bar">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim);">25fps</span>
+            </div>
+          </div>
+
+          <div class="video-feed">
+            <!-- Scene -->
+            <div class="factory-scene" id="factoryScene">
+              <!-- Machines -->
+              <div class="machine-block m1"></div>
+              <div class="machine-block m2"></div>
+
+              <!-- Danger zone around machine 1 -->
+              <div class="danger-zone" style="left:10%; bottom:25%; width:200px; height:190px;">
+                <div class="zone-label">⚠ DANGER ZONE A</div>
+              </div>
+
+              <!-- Restricted zone -->
+              <div class="danger-zone" style="right:10%; top:10%; width:150px; height:100px; border-color:rgba(255,152,0,0.6); background:rgba(255,152,0,0.04);">
+                <div class="zone-label" style="color:rgba(255,152,0,0.8);">🔒 RESTRICTED</div>
+              </div>
+
+              <!-- Worker 1 SAFE (has PPE) -->
+              <div class="bbox bbox-safe" style="left:27%; bottom:38%; width:60px; height:90px;">
+                <div class="bbox-label">✓ PPE OK</div>
+                <div class="bbox-conf">98%</div>
+              </div>
+
+              <!-- Worker 2 CRITICAL (no helmet) -->
+              <div class="bbox bbox-critical" id="worker2bbox" style="right:32%; bottom:33%; width:60px; height:90px;">
+                <div class="bbox-label">✗ NO HELMET</div>
+                <div class="bbox-conf">92%</div>
+              </div>
+
+              <!-- Machine proximity alert -->
+              <div style="position:absolute; left:20%; bottom:38%; width:80px; height:2px; background:linear-gradient(90deg,rgba(255,59,59,0.8),transparent); display:flex; align-items:center;">
+                <div style="position:absolute; right:-40px; top:-12px; font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--critical);">0.8m ⚠</div>
+              </div>
+
+              <!-- Overlays -->
+              <div class="video-overlay-tl">
+                <div class="overlay-tag live">● LIVE — CAMERA 01 / MACHINE FLOOR</div>
+                <div class="overlay-tag">YOLO v8 · POSE ESTIMATION ON</div>
+                <div class="overlay-tag">ZONE GEOFENCING: ACTIVE</div>
+              </div>
+
+              <div class="video-overlay-br">
+                <div id="videoTime" style="font-size:13px; color:rgba(255,255,255,0.7); font-family:'Orbitron',monospace;">--:--:--</div>
+                <div>02/18/2026 — CAM-01</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALERTS PANEL -->
+        <div class="alerts-panel">
+          <div class="alerts-header">
+            <div class="alerts-title">LIVE ALERTS</div>
+            <div class="alert-count-badge" id="alertCount">3 ACTIVE</div>
+          </div>
+
+          <div class="alerts-list" id="alertsList">
+            <!-- Alert 1: Critical -->
+            <div class="alert-card critical">
+              <div class="alert-top">
+                <div class="alert-severity critical">CRITICAL</div>
+                <div class="alert-time" id="a1time">14:02:33</div>
+              </div>
+              <div class="alert-title">Helmet Missing</div>
+              <div class="alert-meta">
+                <div class="alert-meta-item"><span class="icon">📹</span> Camera 01</div>
+                <div class="alert-meta-item"><span class="icon">📍</span> Machine Area</div>
+              </div>
+              <div class="alert-confidence">
+                <div class="conf-label">CONF</div>
+                <div class="conf-bar"><div class="conf-fill" style="width:92%"></div></div>
+                <div class="conf-value">92%</div>
+              </div>
+              <div class="snapshot-thumb">[ SNAPSHOT PREVIEW — 14:02:33 ]</div>
+            </div>
+
+            <!-- Alert 2: Critical -->
+            <div class="alert-card critical">
+              <div class="alert-top">
+                <div class="alert-severity critical">CRITICAL</div>
+                <div class="alert-time">13:58:11</div>
+              </div>
+              <div class="alert-title">Machine Proximity Breach</div>
+              <div class="alert-meta">
+                <div class="alert-meta-item"><span class="icon">📹</span> Camera 01</div>
+                <div class="alert-meta-item"><span class="icon">📍</span> Zone A — 0.8m</div>
+              </div>
+              <div class="alert-confidence">
+                <div class="conf-label">CONF</div>
+                <div class="conf-bar"><div class="conf-fill" style="width:88%"></div></div>
+                <div class="conf-value">88%</div>
+              </div>
+              <div class="snapshot-thumb">[ SNAPSHOT PREVIEW — 13:58:11 ]</div>
+            </div>
+
+            <!-- Alert 3: Warning -->
+            <div class="alert-card warning">
+              <div class="alert-top">
+                <div class="alert-severity warning">MEDIUM</div>
+                <div class="alert-time">13:45:22</div>
+              </div>
+              <div class="alert-title">Restricted Zone Entry</div>
+              <div class="alert-meta">
+                <div class="alert-meta-item"><span class="icon">📹</span> Camera 03</div>
+                <div class="alert-meta-item"><span class="icon">📍</span> Storage Wing</div>
+              </div>
+              <div class="alert-confidence">
+                <div class="conf-label">CONF</div>
+                <div class="conf-bar"><div class="conf-fill" style="width:79%"></div></div>
+                <div class="conf-value">79%</div>
+              </div>
+              <div class="snapshot-thumb">[ SNAPSHOT PREVIEW — 13:45:22 ]</div>
+            </div>
+
+            <!-- Alert 4: Low -->
+            <div class="alert-card low">
+              <div class="alert-top">
+                <div class="alert-severity low">LOW</div>
+                <div class="alert-time">13:30:05</div>
+              </div>
+              <div class="alert-title">PPE Fully Compliant — Zone B</div>
+              <div class="alert-meta">
+                <div class="alert-meta-item"><span class="icon">📹</span> Camera 02</div>
+                <div class="alert-meta-item"><span class="icon">✓</span> 4 Workers</div>
+              </div>
+              <div class="alert-confidence">
+                <div class="conf-label">CONF</div>
+                <div class="conf-bar"><div class="conf-fill" style="width:97%"></div></div>
+                <div class="conf-value">97%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INCIDENTS TAB -->
+    <div class="tab-content" id="tab-incidents">
+      <div class="timeline-layout">
+        <div class="timeline-toolbar">
+          <span style="font-family:'Orbitron',monospace; font-size:12px; color:var(--neon); letter-spacing:2px; margin-right:8px;">INCIDENT TIMELINE</span>
+          <button class="filter-btn active">ALL</button>
+          <button class="filter-btn">CRITICAL</button>
+          <button class="filter-btn">PPE</button>
+          <button class="filter-btn">FALL</button>
+          <button class="filter-btn">ZONE</button>
+          <button class="filter-btn">ASSET</button>
+          <div style="margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim);">TODAY — 7 INCIDENTS</div>
+        </div>
+
+        <div class="timeline-list">
+          <!-- Incidents -->
+          <div class="incident-row">
+            <div class="incident-thumb">⛑️</div>
+            <div class="incident-time">14:02:33<br>TODAY</div>
+            <div class="incident-info">
+              <div class="incident-type" style="color:var(--critical);">Helmet Not Worn</div>
+              <div class="incident-meta">Camera 01 · Machine Floor Zone A · Duration: 47s</div>
+            </div>
+            <div class="incident-badge critical">CRITICAL</div>
+            <div class="incident-conf" style="color:var(--critical);">92%</div>
+            <button class="incident-download">⬇ CLIP</button>
+          </div>
+
+          <div class="incident-row">
+            <div class="incident-thumb">⚙️</div>
+            <div class="incident-time">13:58:11<br>TODAY</div>
+            <div class="incident-info">
+              <div class="incident-type" style="color:var(--critical);">Machine Proximity Breach</div>
+              <div class="incident-meta">Camera 01 · Zone A · Distance: 0.8m · Duration: 12s</div>
+            </div>
+            <div class="incident-badge critical">CRITICAL</div>
+            <div class="incident-conf" style="color:var(--critical);">88%</div>
+            <button class="incident-download">⬇ CLIP</button>
+          </div>
+
+          <div class="incident-row">
+            <div class="incident-thumb">🚫</div>
+            <div class="incident-time">13:45:22<br>TODAY</div>
+            <div class="incident-info">
+              <div class="incident-type" style="color:var(--warning);">Unauthorized Zone Access</div>
+              <div class="incident-meta">Camera 03 · Storage Restricted Area · Duration: 28s</div>
+            </div>
+            <div class="incident-badge warning">MEDIUM</div>
+            <div class="incident-conf" style="color:var(--warning);">79%</div>
+            <button class="incident-download">⬇ CLIP</button>
+          </div>
+
+          <div class="incident-row">
+            <div class="incident-thumb">🧤</div>
+            <div class="incident-time">12:31:07<br>TODAY</div>
+            <div class="incident-info">
+              <div class="incident-type" style="color:var(--warning);">Gloves Missing</div>
+              <div class="incident-meta">Camera 02 · Assembly Line B · Duration: 15s</div>
+            </div>
+            <div class="incident-badge warning">MEDIUM</div>
+            <div class="incident-conf" style="color:var(--warning);">85%</div>
+            <button class="incident-download">⬇ CLIP</button>
+          </div>
+
+          <div class="incident-row">
+            <div class="incident-thumb">🫵</div>
+            <div class="incident-time">11:17:43<br>TODAY</div>
+            <div class="incident-info">
+              <div class="incident-type" style="color:var(--critical);">Fall Detected — Worker Down</div>
+              <div class="incident-meta">Camera 04 · Loading Dock · Inactivity: 8s · MEDICAL ALERT SENT</div>
+            </div>
+            <div class="incident-badge critical">CRITICAL</div>
+            <div class="incident-conf" style="color:var(--critical);">96%</div>
+            <button class="incident-download">⬇ CLIP</button>
+          </div>
+
+          <div class="incident-row">
+            <div class="incident-thumb">📦</div>
+            <div class="incident-time">10:02:59<br>TODAY</div>
+            <div class="incident-info">
+              <div class="incident-type" style="color:var(--warning);">Asset Zone Intrusion</div>
+              <div class="incident-meta">Camera 05 · Equipment Storage · After-hours entry</div>
+            </div>
+            <div class="incident-badge warning">MEDIUM</div>
+            <div class="incident-conf" style="color:var(--warning);">83%</div>
+            <button class="incident-download">⬇ CLIP</button>
+          </div>
+
+          <div class="incident-row">
+            <div class="incident-thumb">🦺</div>
+            <div class="incident-time">08:45:12<br>TODAY</div>
+            <div class="incident-info">
+              <div class="incident-type" style="color:var(--safe);">Safety Vest Missing — Resolved</div>
+              <div class="incident-meta">Camera 01 · Entrance Zone · Self-corrected in 22s</div>
+            </div>
+            <div class="incident-badge low">RESOLVED</div>
+            <div class="incident-conf" style="color:var(--safe);">91%</div>
+            <button class="incident-download">⬇ CLIP</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HEATMAP TAB -->
+    <div class="tab-content" id="tab-heatmap">
+      <div class="heatmap-layout">
+        <div class="heatmap-canvas-area">
+          <div class="floor-plan">
+            <!-- Rooms / zones -->
+            <div class="room" style="left:5%; top:5%; width:35%; height:45%; background:rgba(255,59,59,0.03);">
+              <div class="room-label">MACHINE FLOOR<br>Zone A</div>
+            </div>
+            <div class="room" style="left:42%; top:5%; width:30%; height:45%; background:rgba(255,152,0,0.03);">
+              <div class="room-label">ASSEMBLY LINE<br>Zone B</div>
+            </div>
+            <div class="room" style="left:74%; top:5%; width:21%; height:45%; background:rgba(34,197,94,0.03);">
+              <div class="room-label">CONTROL<br>ROOM</div>
+            </div>
+            <div class="room" style="left:5%; top:52%; width:55%; height:43%; background:rgba(255,152,0,0.02);">
+              <div class="room-label">LOADING DOCK — Zone C</div>
+            </div>
+            <div class="room" style="left:62%; top:52%; width:33%; height:43%; background:rgba(255,59,59,0.02);">
+              <div class="room-label">STORAGE<br>RESTRICTED</div>
+            </div>
+
+            <!-- Heat spots -->
+            <div class="heat-spot heat-critical" style="width:200px; height:200px; left:3%; top:5%;"></div>
+            <div class="heat-spot heat-critical" style="width:160px; height:160px; left:8%; top:15%;"></div>
+            <div class="heat-spot heat-warning" style="width:150px; height:150px; left:42%; top:5%;"></div>
+            <div class="heat-spot heat-warning" style="width:120px; height:120px; left:5%; top:52%;"></div>
+            <div class="heat-spot heat-critical" style="width:100px; height:100px; left:62%; top:55%;"></div>
+            <div class="heat-spot heat-safe" style="width:120px; height:120px; left:74%; top:5%;"></div>
+            <div class="heat-spot heat-warning" style="width:80px; height:80px; left:35%; top:60%;"></div>
+
+            <!-- Labels -->
+            <div class="floor-label" style="left:6px; top:6px;">FACTORY FLOOR PLAN — VIOLATION HEATMAP</div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="heatmap-sidebar">
+          <div style="font-family:'Orbitron',monospace; font-size:11px; color:var(--neon); letter-spacing:2px;">HEATMAP LEGEND</div>
+
+          <div class="heatmap-legend">
+            <div class="legend-row">
+              <div class="legend-swatch" style="background:rgba(255,59,59,0.7);"></div>
+              <div class="legend-text">High Risk Zone</div>
+              <div class="legend-count" style="color:var(--critical);">18</div>
+            </div>
+            <div class="legend-row">
+              <div class="legend-swatch" style="background:rgba(255,152,0,0.6);"></div>
+              <div class="legend-text">Medium Risk Zone</div>
+              <div class="legend-count" style="color:var(--warning);">9</div>
+            </div>
+            <div class="legend-row">
+              <div class="legend-swatch" style="background:rgba(34,197,94,0.5);"></div>
+              <div class="legend-text">Safe Zone</div>
+              <div class="legend-count" style="color:var(--safe);">2</div>
+            </div>
+          </div>
+
+          <div style="font-family:'Orbitron',monospace; font-size:11px; color:var(--neon); letter-spacing:2px; margin-top:4px;">ZONE BREAKDOWN</div>
+
+          <div class="zone-stat">
+            <div class="zone-stat-name" style="color:var(--critical);">Machine Floor (Zone A)</div>
+            <div class="zone-stat-bar"><div class="zone-stat-fill" style="width:85%; background:var(--critical);"></div></div>
+            <div class="zone-stat-meta"><span>18 violations</span><span>HIGH RISK</span></div>
+          </div>
+
+          <div class="zone-stat">
+            <div class="zone-stat-name" style="color:var(--warning);">Assembly Line (Zone B)</div>
+            <div class="zone-stat-bar"><div class="zone-stat-fill" style="width:50%; background:var(--warning);"></div></div>
+            <div class="zone-stat-meta"><span>9 violations</span><span>MEDIUM</span></div>
+          </div>
+
+          <div class="zone-stat">
+            <div class="zone-stat-name" style="color:var(--warning);">Loading Dock (Zone C)</div>
+            <div class="zone-stat-bar"><div class="zone-stat-fill" style="width:40%; background:var(--warning);"></div></div>
+            <div class="zone-stat-meta"><span>7 violations</span><span>MEDIUM</span></div>
+          </div>
+
+          <div class="zone-stat">
+            <div class="zone-stat-name" style="color:var(--critical);">Storage (Restricted)</div>
+            <div class="zone-stat-bar"><div class="zone-stat-fill" style="width:30%; background:var(--critical);"></div></div>
+            <div class="zone-stat-meta"><span>5 violations</span><span>ACCESS LOG</span></div>
+          </div>
+
+          <div class="zone-stat">
+            <div class="zone-stat-name" style="color:var(--safe);">Control Room</div>
+            <div class="zone-stat-bar"><div class="zone-stat-fill" style="width:10%; background:var(--safe);"></div></div>
+            <div class="zone-stat-meta"><span>2 violations</span><span>SAFE</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS TAB -->
+    <div class="tab-content" id="tab-analytics">
+      <div class="analytics-layout">
+
+        <!-- KPIs span full row -->
+        <div class="panel-card span-3">
+          <div class="panel-card-title">BUSINESS IMPACT METRICS</div>
+          <div class="kpi-grid" style="grid-template-columns: repeat(5,1fr);">
+            <div class="kpi-card">
+              <div class="kpi-icon">🛡</div>
+              <div class="kpi-val">87%</div>
+              <div class="kpi-desc">Safety Compliance</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon">⚡</div>
+              <div class="kpi-val">4.2s</div>
+              <div class="kpi-desc">Avg Response Time</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon">📉</div>
+              <div class="kpi-val">41%</div>
+              <div class="kpi-desc">Accident Reduction</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon">🧢</div>
+              <div class="kpi-val">92%</div>
+              <div class="kpi-desc">PPE Compliance Rate</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon">💰</div>
+              <div class="kpi-val">₹2.4L</div>
+              <div class="kpi-desc">Asset Loss Prevented</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Violations over time -->
+        <div class="panel-card span-2">
+          <div class="panel-card-title">VIOLATIONS OVER TIME (TODAY)</div>
+          <div class="line-chart-container">
+            <svg viewBox="0 0 400 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <!-- Grid lines -->
+              <line x1="0" y1="25" x2="400" y2="25" stroke="#1a2d4a" stroke-width="1"/>
+              <line x1="0" y1="50" x2="400" y2="50" stroke="#1a2d4a" stroke-width="1"/>
+              <line x1="0" y1="75" x2="400" y2="75" stroke="#1a2d4a" stroke-width="1"/>
+              <!-- Area fill -->
+              <path d="M0,80 L40,65 L80,55 L120,70 L160,40 L200,45 L240,30 L280,50 L320,35 L360,20 L400,28 L400,100 L0,100Z" fill="url(#lineGrad)"/>
+              <!-- Line -->
+              <path d="M0,80 L40,65 L80,55 L120,70 L160,40 L200,45 L240,30 L280,50 L320,35 L360,20 L400,28" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linejoin="round"/>
+              <!-- Dots -->
+              <circle cx="400" cy="28" r="4" fill="#00e5ff"/>
+              <circle cx="160" cy="40" r="3" fill="#ff3b3b"/>
+              <!-- X labels -->
+              <text x="0" y="100" font-family="JetBrains Mono" font-size="8" fill="#3d5a7a">08:00</text>
+              <text x="80" y="100" font-family="JetBrains Mono" font-size="8" fill="#3d5a7a">10:00</text>
+              <text x="160" y="100" font-family="JetBrains Mono" font-size="8" fill="#3d5a7a">12:00</text>
+              <text x="240" y="100" font-family="JetBrains Mono" font-size="8" fill="#3d5a7a">14:00</text>
+              <text x="320" y="100" font-family="JetBrains Mono" font-size="8" fill="#3d5a7a">16:00</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Compliance Ring -->
+        <div class="panel-card">
+          <div class="panel-card-title">PPE COMPLIANCE</div>
+          <div class="compliance-ring-container">
+            <div class="ring-wrapper">
+              <svg width="140" height="140" viewBox="0 0 140 140">
+                <circle cx="70" cy="70" r="58" fill="none" stroke="#1a2d4a" stroke-width="10"/>
+                <circle cx="70" cy="70" r="58" fill="none" stroke="#22c55e" stroke-width="10"
+                  stroke-dasharray="364.4" stroke-dashoffset="43.7"
+                  stroke-linecap="round" filter="url(#greenGlow)"/>
+                <defs>
+                  <filter id="greenGlow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                </defs>
+              </svg>
+              <div class="ring-center">
+                <div class="ring-pct">87%</div>
+                <div class="ring-label">COMPLIANT</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--safe)"></div>Helmet: 91%</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div>Vest: 85%</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--critical)"></div>Gloves: 78%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bar chart by camera -->
+        <div class="panel-card">
+          <div class="panel-card-title">VIOLATIONS BY CAMERA</div>
+          <div class="bar-chart">
+            <div class="bar-group">
+              <div class="bar-fill" style="height:85%; background:linear-gradient(0deg,#ff3b3b,#ff6b6b);" data-val="18"></div>
+              <div class="bar-xlabel">CAM 01</div>
+            </div>
+            <div class="bar-group">
+              <div class="bar-fill" style="height:40%; background:linear-gradient(0deg,#ff9800,#ffb74d);" data-val="9"></div>
+              <div class="bar-xlabel">CAM 02</div>
+            </div>
+            <div class="bar-group">
+              <div class="bar-fill" style="height:30%; background:linear-gradient(0deg,#ff9800,#ffb74d);" data-val="7"></div>
+              <div class="bar-xlabel">CAM 03</div>
+            </div>
+            <div class="bar-group">
+              <div class="bar-fill" style="height:20%; background:linear-gradient(0deg,#22c55e,#4ade80);" data-val="4"></div>
+              <div class="bar-xlabel">CAM 04</div>
+            </div>
+            <div class="bar-group">
+              <div class="bar-fill" style="height:15%; background:linear-gradient(0deg,#22c55e,#4ade80);" data-val="2"></div>
+              <div class="bar-xlabel">CAM 05</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Violation type pie -->
+        <div class="panel-card">
+          <div class="panel-card-title">VIOLATION TYPES</div>
+          <div class="pie-container">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <!-- Pie segments (approximate) -->
+              <circle cx="50" cy="50" r="40" fill="transparent" stroke="#ff3b3b" stroke-width="20" stroke-dasharray="113 139" stroke-dashoffset="0"/>
+              <circle cx="50" cy="50" r="40" fill="transparent" stroke="#ff9800" stroke-width="20" stroke-dasharray="70 182" stroke-dashoffset="-113"/>
+              <circle cx="50" cy="50" r="40" fill="transparent" stroke="#00e5ff" stroke-width="20" stroke-dasharray="50 202" stroke-dashoffset="-183"/>
+              <circle cx="50" cy="50" r="40" fill="transparent" stroke="#22c55e" stroke-width="20" stroke-dasharray="19 233" stroke-dashoffset="-233"/>
+              <circle cx="50" cy="50" r="15" fill="#0c1627"/>
+            </svg>
+            <div class="pie-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--critical)"></div>PPE Missing (45%)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div>Zone Breach (28%)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--neon)"></div>Proximity (20%)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--safe)"></div>Fall (7%)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fall + Asset stats -->
+        <div class="panel-card">
+          <div class="panel-card-title">DETECTION SUMMARY</div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:10px; border-bottom:1px solid var(--border);">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim);">Fall Events Today</div>
+              <div style="font-family:'Orbitron',monospace; font-size:18px; font-weight:700; color:var(--critical);">1</div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:10px; border-bottom:1px solid var(--border);">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim);">Asset Zone Breaches</div>
+              <div style="font-family:'Orbitron',monospace; font-size:18px; font-weight:700; color:var(--warning);">3</div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:10px; border-bottom:1px solid var(--border);">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim);">Alerts Acknowledged</div>
+              <div style="font-family:'Orbitron',monospace; font-size:18px; font-weight:700; color:var(--neon);">24</div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim);">Pending Review</div>
+              <div style="font-family:'Orbitron',monospace; font-size:18px; font-weight:700; color:var(--warning);">3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RULES ENGINE TAB -->
+    <div class="tab-content" id="tab-rules">
+      <div class="rules-layout">
+
+        <!-- PPE Rules -->
+        <div class="rule-group">
+          <div class="rule-group-title">🧢 PPE COMPLIANCE RULES</div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Helmet Required in All Zones</div>
+              <div class="rule-desc">Alert when worker detected without helmet in any defined zone</div>
+            </div>
+            <div class="rule-threshold">
+              <div class="threshold-val">ALL</div>
+              <div class="threshold-label">Zones</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Safety Vest Required — Machine Floor</div>
+              <div class="rule-desc">High-vis vest mandatory when entering Zone A or Zone B</div>
+            </div>
+            <div class="rule-threshold">
+              <div class="threshold-val">A, B</div>
+              <div class="threshold-label">Zones</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Gloves Required — Assembly Line</div>
+              <div class="rule-desc">Protective gloves mandatory in Zone B assembly operations</div>
+            </div>
+            <div class="rule-threshold">
+              <div class="threshold-val">Zone B</div>
+              <div class="threshold-label">Only</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle off" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Eye Protection — Welding Area</div>
+              <div class="rule-desc">Safety goggles required during active welding operations</div>
+            </div>
+            <div class="rule-threshold">
+              <div class="threshold-val" style="color:var(--text-dim);">OFF</div>
+              <div class="threshold-label">Disabled</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zone Rules -->
+        <div class="rule-group">
+          <div class="rule-group-title">🚧 ZONE & PROXIMITY RULES</div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Machine Proximity Limit</div>
+              <div class="rule-desc">Alert when worker approaches machine within threshold distance</div>
+            </div>
+            <div class="rule-threshold">
+              <div class="threshold-val">1.5m</div>
+              <div class="threshold-label">Min Dist</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">No Entry After Hours</div>
+              <div class="rule-desc">Trigger alert for any person detected in facility post-hours</div>
+            </div>
+            <div class="rule-threshold">
+              <div class="threshold-val">20:00</div>
+              <div class="threshold-label">Cutoff</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Restricted Zone — Storage Wing</div>
+              <div class="rule-desc">Zero unauthorized access allowed in equipment storage area</div>
+            </div>
+            <div class="rule-threshold">
+              <div class="threshold-val">ZERO</div>
+              <div class="threshold-label">Tolerance</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Fall / Inactivity Detection</div>
+              <div class="rule-desc">Trigger medical alert if worker shows no movement for threshold seconds</div>
+            </div>
+            <div class="rule-threshold">
+              <div class="threshold-val">10s</div>
+              <div class="threshold-label">Inactivity</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alert Config -->
+        <div class="rule-group">
+          <div class="rule-group-title">🔔 ALERT CONFIGURATION</div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Dashboard Popup Alerts</div>
+              <div class="rule-desc">Show real-time alert cards on monitoring dashboard</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Audio Alarm — Critical Events</div>
+              <div class="rule-desc">Play alarm sound for critical-level violations</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle off" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">SMS / Email Alerts</div>
+              <div class="rule-desc">Send notifications to safety officers (requires internet)</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Auto Snapshot on Violation</div>
+              <div class="rule-desc">Capture and store frame snapshot when violation is detected</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Model Config -->
+        <div class="rule-group">
+          <div class="rule-group-title">🤖 AI MODEL CONFIG</div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">YOLO Object Detection</div>
+              <div class="rule-desc">Detect persons, PPE, machines in real-time</div>
+            </div>
+            <div class="rule-threshold">
+              <div class="threshold-val">25fps</div>
+              <div class="threshold-label">Frame Rate</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Pose Estimation Engine</div>
+              <div class="rule-desc">Skeleton tracking for fall and posture anomaly detection</div>
+            </div>
+            <div class="rule-threshold">
+              <div class="threshold-val">0.75</div>
+              <div class="threshold-label">Min Conf</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle on" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Vision-Based Geofencing</div>
+              <div class="rule-desc">Distance calculation from defined zone boundaries</div>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="toggle off" onclick="toggleRule(this)"></div>
+            <div class="rule-info">
+              <div class="rule-name">Face Recognition</div>
+              <div class="rule-desc">Disabled by design — Privacy-first ethical AI architecture</div>
+            </div>
+            <div class="rule-threshold">
+              <div class="threshold-val" style="color:var(--safe); font-size:11px;">ETHICAL</div>
+              <div class="threshold-label">AI Policy</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // Clock
+  function updateClock() {
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0,8);
+    document.getElementById('clock').textContent = timeStr;
+    const vt = document.getElementById('videoTime');
+    if(vt) vt.textContent = timeStr;
+    document.querySelectorAll('#a1time').forEach(el => {
+      if(!el.dataset.fixed) el.textContent = timeStr;
+    });
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Tab switching
+  function showTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    const tabs = ['live','incidents','heatmap','analytics','rules'];
+    const idx = tabs.indexOf(tab);
+    document.querySelectorAll('.nav-item')[idx]?.classList.add('active');
+  }
+
+  // Toggle rules
+  function toggleRule(el) {
+    el.classList.toggle('on');
+    el.classList.toggle('off');
+    const threshold = el.closest('.rule-item')?.querySelector('.threshold-val');
+    if(threshold) {
+      if(el.classList.contains('off')) {
+        threshold.style.color = 'var(--text-dim)';
+        threshold.textContent = 'OFF';
+      }
+    }
+  }
+
+  // Camera buttons
+  document.querySelectorAll('.cam-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Demo Violation Simulation
+  const violations = [
+    { title: '🚨 HELMET MISSING', msg: 'Worker detected without helmet\nCamera 01 · Zone A · Conf: 94%', type: 'critical' },
+    { title: '⬇️ FALL DETECTED', msg: 'Worker down — no movement 10s+\nCamera 04 · Loading Dock · MEDICAL ALERT', type: 'critical' },
+    { title: '🚫 RESTRICTED ZONE BREACH', msg: 'Unauthorized entry detected\nCamera 05 · Storage Wing · Conf: 87%', type: 'critical' },
+    { title: '⚙️ MACHINE PROXIMITY ALERT', msg: 'Worker at 0.6m from Machine A\nCamera 01 · Zone A — Min: 1.5m', type: 'critical' },
+  ];
+
+  let violIdx = 0;
+
+  function simulateViolation() {
+    const v = violations[violIdx % violations.length];
+    violIdx++;
+
+    // Toast
+    const toast = document.createElement('div');
+    toast.className = `toast ${v.type}`;
+    toast.innerHTML = `
+      <div class="toast-icon">🚨</div>
+      <div class="toast-body">
+        <div class="toast-title">${v.title}</div>
+        <div class="toast-msg">${v.msg.replace(/\n/g,'<br>')}</div>
+      </div>
+    `;
+    document.getElementById('toastContainer').appendChild(toast);
+    setTimeout(() => toast.remove(), 5200);
+
+    // Update stats
+    const av = document.getElementById('activeViol');
+    if(av) { av.textContent = parseInt(av.textContent) + 1; }
+    const ac = document.getElementById('alertCount');
+    if(ac) { const n = parseInt(ac.textContent); ac.textContent = (n+1) + ' ACTIVE'; }
+
+    // Add alert card
+    const alertsList = document.getElementById('alertsList');
+    if(alertsList) {
+      const now = new Date().toTimeString().slice(0,8);
+      const card = document.createElement('div');
+      card.className = 'alert-card critical';
+      card.innerHTML = `
+        <div class="alert-top">
+          <div class="alert-severity critical">CRITICAL</div>
+          <div class="alert-time">${now}</div>
+        </div>
+        <div class="alert-title">${v.title.replace(/^[^\s]+\s/, '')}</div>
+        <div class="alert-meta">
+          <div class="alert-meta-item"><span class="icon">📹</span> Camera ${(violIdx % 4)+1}</div>
+          <div class="alert-meta-item"><span class="icon">📍</span> Simulated Zone</div>
+        </div>
+        <div class="alert-confidence">
+          <div class="conf-label">CONF</div>
+          <div class="conf-bar"><div class="conf-fill" style="width:${80+Math.floor(Math.random()*15)}%"></div></div>
+          <div class="conf-value">${80+Math.floor(Math.random()*15)}%</div>
+        </div>
+        <div class="snapshot-thumb">[ SIMULATED SNAPSHOT — ${now} ]</div>
+      `;
+      alertsList.insertBefore(card, alertsList.firstChild);
+    }
+  }
+
+  // Animated counter effect on load
+  setTimeout(() => {
+    document.querySelectorAll('.stat-value').forEach(el => {
+      el.classList.add('animated-val');
+    });
+  }, 300);
+</script>
+</body>
+</html>
